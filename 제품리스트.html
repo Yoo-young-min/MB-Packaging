@@ -1,0 +1,787 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>MB Packaging</title>
+  <meta charset="utf-8" />
+
+  <style>
+    body {
+      font-family: Arial;
+      margin:0
+    }
+
+    h1 {
+      text-align: center;
+      margin-bottom: 5px;
+    }
+
+    /* 상단 바 (버튼 + 시계 한 줄 정렬) */
+    .top-bar {
+      width: 95%;
+      margin: 10px auto;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+
+    /* 버튼 (녹색) */
+    .send-btn {
+      padding: 6px 14px;
+      font-size: 14px;
+      cursor: pointer;
+      background-color: #28a745;
+      color: white;
+      border: none;
+      border-radius: 4px;
+    }
+
+    .send-btn:hover {
+      background-color: #218838;
+    }
+
+    
+    /* 테이블 스크롤 영역, th, td는 폰트 조정 */
+    .table-wrapper {
+      width: 100%;          /* ← 변경 */
+      height: 750px;
+      overflow-y: auto;
+      border: 1px solid #ccc;
+      margin-left: 30px;
+    }
+
+    table {
+      width: 100%;
+      border-collapse: collapse;
+    }
+
+    th, td {
+      border: 1px solid #ccc;
+      padding: 6px;
+      text-align: center;
+      font-size: 11px;      /* 테이블내 데이터 글자 크기 */
+      font-weight: 400;     /* 굵기 (400=보통, 500=중간, 600=굵게) */
+      color: #070707;          /* 글자 색 */
+    }
+    td:focus {
+      outline: 2px solid #4CAF50;   /* 클릭했을 때 테두리 */
+      background-color: #f0fff4;    /* 선택 시 배경 */
+    }
+    td:nth-child(4),
+    td:nth-child(5) {
+      text-align: left;
+      padding-left: 10px;
+    }
+
+    th:nth-child(1) { width: 18%; }   /* 쇼핑몰 품목명 */
+    th:nth-child(2) { width: 5%; }  /* 단위 */
+    th:nth-child(3) { width: 18%; }  /* 이카운트 품목명*/
+    th:nth-child(4) { width: 5%; }  /* 코드 */
+    th:nth-child(5) { width: 6%; }  /* 단가 */
+    th:nth-child(6) { width: 5%; }   /* 가로 */
+    th:nth-child(7) { width: 5%; }  /* 세로 */
+    th:nth-child(8) { width: 5%; }  /* 높이 */
+    th:nth-child(9) { width: 7%; }  /* CBM */
+    
+
+
+    /* 테이블 헤더 고정, 폰트 조정 */
+    thead th {
+      position: sticky;
+      top: 0;
+      background-color: powderblue;
+      z-index: 2;
+
+      font-size: 16px;      /* 글자 크기 */
+      font-weight: 400;     /* 굵기 줄임 */
+      letter-spacing: 1px;  /* 글자 간격 */
+      padding: 7px 7px;    /* 위아래 여백 */
+    }
+
+    tr:hover {
+      background-color: #f5f5f5;
+    }
+
+    tr.selected-row {
+      background-color: #e8f5e9 !important; /* 선택 행 전체 하이라이트 */
+    }
+
+    .top-bar {
+      display: flex;
+      justify-content: flex-end;  /* 버튼 왼쪽 정렬 */
+      align-items: center;
+      gap: 10px;                     /* 버튼 사이 간격 */
+      margin-bottom: 10px;
+    }
+    
+    .main-layout {
+     display: flex;
+      width:100%;
+      gap: 30px;
+    }
+
+    .left-table {
+     flex: 3;
+      display: flex;          /* 🔥 추가 */
+      flex-direction: column; /* 🔥 추가 */
+      min-width:0;
+    }
+
+    .right-tables {
+      flex: 1;        /* 오른쪽 25% */
+      display: flex;
+      flex-direction: column;
+      gap: 20px;
+      padding-right: 30px;
+      
+    }
+
+
+    .side-table th {
+      background-color: #e6f2ff;   /* 우측 테이블 기준부분 연한 하늘색 */
+      font-weight: 500;
+    }
+
+
+    .side-table {
+     width: 100%;
+      border-collapse: collapse;
+    }
+
+    .side-table th {
+      background-color: #e6f2ff;
+      font-weight: 500;
+    }
+
+    .side-table td {
+      background-color: #ffffff;
+      cursor: text;
+    }
+
+    .side-table td:focus {
+      outline: 2px solid #4CAF50;
+      background-color: #f0fff4;
+    }
+
+
+    .side-table:first-of-type th,           /* 우측 테이블1 칸 크기  */
+    .side-table:first-of-type td {
+      width: 8.33%;
+    }
+
+
+    .side-table:last-of-type th:nth-child(1),   /* 우측 테이블2 칸 크기 */
+    .side-table:last-of-type td:nth-child(1) {
+      width: 40%;
+    }
+
+    .side-table:last-of-type th:nth-child(2),
+    .side-table:last-of-type td:nth-child(2) {
+      width: 30%;
+    }
+
+    .side-table:last-of-type th:nth-child(3),
+    .side-table:last-of-type td:nth-child(3) {
+      width: 30%;
+    }
+
+    .side-table td:nth-child(2),      /* 우측 테이블2 행 높이 조절 */
+    .side-table td:nth-child(3) {
+     padding-top: 8px;
+     padding-bottom: 8px;
+    }
+
+    .side-table input {
+     width: 100%;
+      box-sizing: border-box;
+    }
+
+    .side-table input {          /* 우측 테이블들 가운데 정렬 */
+      width: 100%;
+      height: 100%;
+      box-sizing: border-box;
+      text-align: center;
+
+      border: 1px solid #ccc;   /* ← 테두리 추가 */
+      background-color: #ffffff; /* ← 흰 배경 */
+    }
+
+
+    /* 크롬, 엣지, 사파리 */
+    .side-table input[type="number"]::-webkit-outer-spin-button,
+    .side-table input[type="number"]::-webkit-inner-spin-button {
+      -webkit-appearance: none;
+      margin: 0;
+  }
+
+  /* 파이어폭스 */
+    .side-table input[type="number"] {
+      -moz-appearance: textfield;
+    }
+    
+  /* 코드 열 (4번째 열) */
+    .left-table table td:nth-child(4) {
+      text-align: center;
+    }
+
+    /* 단가 열 (5번째 열) */
+    .left-table table td:nth-child(5),
+    .left-table table td:nth-child(5) input {
+      text-align: center;
+    }
+
+  </style>
+
+</head>
+
+<body>
+
+  <h1>제품리스트</h1>
+
+  <!-- 버튼 -->
+  <div class="top-bar">
+
+  <button class="send-btn" onclick="saveTableData()">
+    <strong>저장하기</strong>
+  </button>
+
+  <button class="send-btn" onclick="downloadTableData()">
+    <strong>다운로드</strong>
+  </button>
+  </div>
+
+  
+  <!-- 우측 기준데이터 테이블 1 -->
+<div class="main-layout">
+
+  <!-- 왼쪽 기존 테이블 -->
+  <div class="left-table">
+    <div class="table-wrapper">
+      <table>
+        <thead>
+        <tr>
+          <th>쇼핑몰 품목명</th>
+          <th>단위</th>
+          <th>이카운트 품목명</th>
+          <th>코드</th>
+          <th>단가</th>
+          <th>가로</th>
+          <th>세로</th>
+          <th>높이</th>
+          <th>CBM</th>
+        </tr>
+      </thead>
+      <tbody id="orderTable"></tbody><!-- 기존 9열 테이블 -->
+      </table>
+    </div>
+  </div>
+
+  <!-- 오른쪽 영역 작은 테이블 2개 -->
+  <div class="right-tables">
+
+    <!-- 위 6x3 -->
+    <table class="side-table">
+      <tbody>
+        <tr>
+          <th>기준 부피</th><th>가로</th><th>세로</th><th>높이</th><th>CBM</th><th>금액</th></tr>
+        <tr>
+          <th>택&nbsp;&nbsp;배</th>
+          <td><input type="text" class="number-input"></td>
+          <td><input type="text" class="number-input"></td>
+          <td><input type="text" class="number-input"></td>
+          <td><input type="text" class="number-input"></td>
+          <td><input type="text" class="number-input"></td>
+        </tr>
+        <tr>
+          <th>특수품목</th>
+          <td><input type="text" class="number-input"></td>
+          <td><input type="text" class="number-input"></td>
+          <td><input type="text" class="number-input"></td>
+          <td><input type="text" class="number-input"></td>
+          <td><input type="text" class="number-input"></td>
+        </tr>
+      </tbody>
+    </table>
+
+    <!-- 아래 3x25 -->
+    <table class="side-table">
+  <tbody>
+    <tr>
+      <th>산정 조건</th><th>CBM</th><th>금액</th>
+    </tr>
+
+    <!-- 택배비 -->
+    <tr>
+      <th rowspan="7">택배비</th>
+      <td><input type="text" class="number-input"></td>
+      <td><input type="text" class="number-input"></td>
+    </tr>
+    <td><input type="text" class="number-input"></td><td><input type="text" class="number-input"></td></tr>
+    <td><input type="text" class="number-input"></td><td><input type="text" class="number-input"></td></tr>
+    <td><input type="text" class="number-input"></td><td><input type="text" class="number-input"></td></tr>
+    <td><input type="text" class="number-input"></td><td><input type="text" class="number-input"></td></tr>
+    <td><input type="text" class="number-input"></td><td><input type="text" class="number-input"></td></tr>
+    <td><input type="text" class="number-input"></td><td><input type="text" class="number-input"></td></tr>
+
+    <!-- 화물 -->
+    <tr>
+      <th rowspan="7">화&nbsp;&nbsp;물</th>
+      <td><input type="text" class="number-input"></td>
+      <td><input type="text" class="number-input"></td>
+    </tr>
+    <td><input type="text" class="number-input"></td><td><input type="text" class="number-input"></td></tr>
+    <td><input type="text" class="number-input"></td><td><input type="text" class="number-input"></td></tr>
+    <td><input type="text" class="number-input"></td><td><input type="text" class="number-input"></td></tr>
+    <td><input type="text" class="number-input"></td><td><input type="text" class="number-input"></td></tr>
+    <td><input type="text" class="number-input"></td><td><input type="text" class="number-input"></td></tr>
+    <td><input type="text" class="number-input"></td><td><input type="text" class="number-input"></td></tr>
+
+    <!-- 화물 택배 -->
+    <tr>
+      <th rowspan="7">화물 택배</th>
+      <td><input type="number" step="any"></td>
+      <td><input type="number" step="any"></td>
+    </tr>
+    <tr><td><input type="number" step="any"></td><td><input type="number" step="any"></td></tr>
+    <tr><td><input type="number" step="any"></td><td><input type="number" step="any"></td></tr>
+    <tr><td><input type="number" step="any"></td><td><input type="number" step="any"></td></tr>
+    <tr><td><input type="number" step="any"></td><td><input type="number" step="any"></td></tr>
+    <tr><td><input type="number" step="any"></td><td><input type="number" step="any"></td></tr>
+    <tr><td><input type="number" step="any"></td><td><input type="number" step="any"></td></tr>
+
+    <!-- 특수품목 -->
+    <tr>
+      <th rowspan="7">특수품목</th>
+      <td></td>
+      <td></td>
+    </tr>
+    <tr><td><input type="number" step="any"></td><td><input type="number" step="any"></td></tr>
+    <tr><td><input type="number" step="any"></td><td><input type="number" step="any"></td></tr>
+    <tr><td><input type="number" step="any"></td><td><input type="number" step="any"></td></tr>
+    <tr><td><input type="number" step="any"></td><td><input type="number" step="any"></td></tr>
+    <tr><td><input type="number" step="any"></td><td><input type="number" step="any"></td></tr>
+    <tr><td><input type="number" step="any"></td><td><input type="number" step="any"></td></tr>
+
+  </tbody>
+</table>
+
+  </div>
+
+</div>
+
+  
+ <!-- 행 자동 생성, 300숫자를 변경하면 행 숫자 변경 가능 -->
+  <script>
+    document.addEventListener("DOMContentLoaded", function () {
+      const tbody = document.getElementById("orderTable");
+
+      for (let i = 0; i < 300; i++) {
+        let row = "<tr>";
+
+        for (let j = 0; j < 9; j++) {  // 9개열
+          row += "<td contenteditable='true'></td>";
+        }
+
+        row += "</tr>";
+        tbody.innerHTML += row;
+      }
+    });
+  </script>
+
+<!-- 엑셀 복붙 기능 -->
+  <script>
+document.getElementById("orderTable").addEventListener("paste", function(e) {
+  e.preventDefault();
+
+  const text = (e.clipboardData || window.clipboardData).getData("text");
+  const rows = text.split("\n");
+  
+  const startCell = document.activeElement;
+  const startRow = startCell.parentElement.rowIndex - 1; 
+  const startCol = startCell.cellIndex;
+
+  rows.forEach((rowText, i) => {
+    const cols = rowText.split("\t");
+    cols.forEach((colText, j) => {
+      const row = document.querySelectorAll("#orderTable tr")[startRow + i];
+      if (row) {
+        const cell = row.cells[startCol + j];
+        if (cell) {
+          cell.innerText = colText.trim();
+        }
+      }
+    });
+  });
+});
+</script>
+
+<!-- 별도 입력 기능, 커서 자유 이동 -->
+<script>
+document.getElementById("orderTable").addEventListener("keydown", function(e) {
+
+  const cell = document.activeElement;
+  if (cell.tagName !== "TD") return;
+
+  const row = cell.parentElement;
+  const rowIndex = row.rowIndex - 1;
+  const colIndex = cell.cellIndex;
+
+  let target;
+
+  switch(e.key) {
+    case "ArrowRight":
+      target = row.cells[colIndex + 1];
+      break;
+    case "ArrowLeft":
+      target = row.cells[colIndex - 1];
+      break;
+    case "ArrowDown":
+      target = row.nextElementSibling?.cells[colIndex];
+      break;
+    case "ArrowUp":
+      target = row.previousElementSibling?.cells[colIndex];
+      break;
+    case "Enter":
+      e.preventDefault();
+      target = row.nextElementSibling?.cells[colIndex];
+      break;
+    case "Tab":
+      e.preventDefault();
+      target = row.cells[colIndex + 1] ||
+               row.nextElementSibling?.cells[0];
+      break;
+  }
+
+  if (target) {
+    target.focus();
+  }
+});
+</script>
+
+<!-- 1000단위 콤마 자동 적용 -->
+<script>
+document.getElementById("orderTable").addEventListener("blur", function(e) {
+  const cell = e.target;
+  if (cell.tagName !== "TD") return;
+
+  const colIndex = cell.cellIndex;
+
+  // 6,7,8,10번 열에 적용 (0부터 시작)
+  if (colIndex === 4 || colIndex === 5 || colIndex === 6 || colIndex === 7) {
+    let value = cell.innerText.replace(/,/g, "").trim();
+
+    if (!isNaN(value) && value !== "") {
+      cell.innerText = Number(value).toLocaleString();
+    }
+  }
+}, true);
+</script>
+
+
+<!-- 9번째 열(CBM)까지 하이라이트 적용 -->
+<script>
+document.getElementById("orderTable").addEventListener("focusin", function(e) {
+
+  if (e.target.tagName !== "TD") return;
+
+  const colIndex = e.target.cellIndex;
+
+  // 👉 9번째 열(CBM)까지만 활성화 (0~8)
+  if (colIndex > 8) return;
+
+  // 기존 선택 제거
+  document.querySelectorAll("#orderTable tr").forEach(row => {
+    row.classList.remove("selected-row");
+  });
+
+  // 현재 행 선택
+  e.target.parentElement.classList.add("selected-row");
+});
+</script>
+
+
+<!-- 수량, 단가, 금액 숫자 수정시 한번에 수정하기 -->
+<script>
+const table = document.getElementById("orderTable");
+
+// 숫자 열 인덱스 (수량=6, 금액=7, 합계=8 → 0부터 시작하므로 5,6,7)
+const numberColumns = [5, 6, 7];
+
+table.addEventListener("focusin", function(e) {
+
+  if (e.target.tagName !== "TD") return;
+
+  const colIndex = e.target.cellIndex;
+
+  if (numberColumns.includes(colIndex)) {
+
+    // 약간의 딜레이 후 전체 선택
+    setTimeout(() => {
+      const range = document.createRange();
+      range.selectNodeContents(e.target);
+
+      const selection = window.getSelection();
+      selection.removeAllRanges();
+      selection.addRange(range);
+    }, 0);
+  }
+});
+</script>
+
+<!-- 합계 열 금액 합산 기능 -->
+<script>
+const tableBody = document.getElementById("orderTable");
+const grandTotalEl = document.getElementById("grandTotal");
+
+// 합계 열 인덱스 (0부터 시작 → 8번째 열이면 7)
+const totalColumnIndex = 7;
+
+function calculateGrandTotal() {
+  let sum = 0;
+
+  const rows = tableBody.querySelectorAll("tr"); // tbody 안의 행만 가져오기
+
+  rows.forEach(row => {
+    const cell = row.cells[totalColumnIndex];
+    if (!cell) return;
+
+    // 콤마 제거 후 숫자로 변환
+    let value = cell.innerText.replace(/,/g, "").trim();
+    if (value !== "" && !isNaN(value)) {
+      sum += Number(value);
+    }
+  });
+
+  grandTotalEl.innerText = sum.toLocaleString();
+}
+
+// 값 수정 후 자동 재계산
+tableBody.addEventListener("blur", function(e) {
+  if (e.target.tagName === "TD") {
+    calculateGrandTotal();
+  }
+}, true);
+
+// 최초 실행
+calculateGrandTotal();
+</script>
+
+
+
+<!-- 데이터 저장하기 -->
+<script>
+function getLeftTableData() {
+  const table = document.getElementById("orderTable");
+  const rows = table.querySelectorAll("tr");
+  const data = [];
+
+  rows.forEach(row => {
+    const rowData = [];
+    row.querySelectorAll("td").forEach(cell => {
+      rowData.push(cell.innerText.trim());
+    });
+    if (rowData.some(cell => cell !== "")) {
+      data.push(rowData);
+    }
+  });
+
+  return data;
+}
+
+function getRightTableData() {
+  const inputs = document.querySelectorAll(".side-table input");
+  const data = [];
+
+  inputs.forEach(input => {
+    data.push(input.value);
+  });
+
+  return data;
+}
+
+function saveTableData() {
+  const saveData = {
+    leftTable: getLeftTableData(),
+    rightTables: getRightTableData()
+  };
+
+  localStorage.setItem("productPageData", JSON.stringify(saveData));
+  alert("저장되었습니다 👍");
+}
+</script>
+
+
+<!-- 데이터 다운로드 -->
+<script>
+function downloadTableData() {
+  const data = getTableData();
+
+  if (data.length === 0) {
+    alert("저장할 데이터가 없습니다.");
+    return;
+  }
+
+  let csvContent = "";
+
+  data.forEach(row => {
+    csvContent += row.map(cell => `"${cell}"`).join(",") + "\n";
+  });
+
+  const blob = new Blob(["\uFEFF" + csvContent], { type: "text/csv;charset=utf-8;" });
+  const link = document.createElement("a");
+
+  link.href = URL.createObjectURL(blob);
+  link.download = "주문데이터.csv";
+  link.click();
+}
+</script>
+
+<!-- 우측 테이블들 숫자 1000단위 콤마, 화살표 이동  -->
+<script>
+
+// ① 콤마 기능
+document.querySelectorAll('.number-input').forEach(input => {
+
+  input.addEventListener('input', function () {
+
+    let value = this.value.replace(/,/g, '');
+
+    if (!/^\d*\.?\d*$/.test(value)) return;
+
+    if (value === '') {
+      this.value = '';
+      return;
+    }
+
+    let parts = value.split('.');
+    parts[0] = Number(parts[0]).toLocaleString();
+
+    this.value = parts.join('.');
+  });
+
+  input.addEventListener('focus', function () {
+    this.select();
+  });
+
+});
+
+
+// 🔥 ② 여기 아래에 방향키 코드 붙이기
+
+document.querySelectorAll('.side-table').forEach(table => {
+
+  const inputs = table.querySelectorAll('.number-input');
+
+  inputs.forEach((input) => {
+
+    input.addEventListener('keydown', function (e) {
+
+      const row = this.closest('tr');
+      const rows = Array.from(table.querySelectorAll('tr'));
+      const rowIndex = rows.indexOf(row);
+      const cellIndex = Array.from(row.children)
+                             .indexOf(this.parentElement);
+
+      if (e.key === "ArrowRight") {
+        e.preventDefault();
+        const next = row.children[cellIndex + 1];
+        if (next && next.querySelector('input')) {
+          next.querySelector('input').focus();
+        }
+      }
+
+      if (e.key === "ArrowLeft") {
+        e.preventDefault();
+        const prev = row.children[cellIndex - 1];
+        if (prev && prev.querySelector('input')) {
+          prev.querySelector('input').focus();
+        }
+      }
+
+      if (e.key === "ArrowDown") {
+        e.preventDefault();
+        const nextRow = rows[rowIndex + 1];
+        if (nextRow) {
+          const nextCell = nextRow.children[cellIndex];
+          if (nextCell && nextCell.querySelector('input')) {
+            nextCell.querySelector('input').focus();
+          }
+        }
+      }
+
+      if (e.key === "ArrowUp") {
+        e.preventDefault();
+        const prevRow = rows[rowIndex - 1];
+        if (prevRow) {
+          const prevCell = prevRow.children[cellIndex];
+          if (prevCell && prevCell.querySelector('input')) {
+            prevCell.querySelector('input').focus();
+          }
+        }
+      }
+
+    });
+
+  });
+
+});
+
+</script>
+
+
+<!-- 좌측 테이블 CBM 자동 계산식  -->
+<script>
+document.getElementById('orderTable').addEventListener('input', function(e) {
+  const row = e.target.closest('tr');
+  if (!row) return;
+
+  // 6~8열: 가로, 세로, 높이
+  const width  = parseFloat(row.children[5].innerText.replace(/,/g,'')) || 0;
+  const length = parseFloat(row.children[6].innerText.replace(/,/g,'')) || 0;
+  const height = parseFloat(row.children[7].innerText.replace(/,/g,'')) || 0;
+
+  const cbmCell = row.children[8]; // CBM 열
+  if (width > 0 && length > 0 && height > 0) {
+    const cbm = (width * length * height) / 1000000;
+    cbmCell.textContent = cbm.toFixed(6);
+  } else {
+    cbmCell.textContent = '';
+  }
+});
+</script>
+
+
+<!-- 테이블에 제품리스트 보이게 -->
+<script>
+function loadAllData() {
+  const saved = localStorage.getItem("productPageData");
+  if (!saved) return;
+
+  const data = JSON.parse(saved);
+
+  // 왼쪽 테이블 복원
+  const rows = document.querySelectorAll("#orderTable tr");
+  data.leftTable.forEach((rowData, i) => {
+    if (!rows[i]) return;
+    rowData.forEach((cellData, j) => {
+      rows[i].cells[j].innerText = cellData;
+    });
+  });
+
+  // 오른쪽 테이블 복원
+  const inputs = document.querySelectorAll(".side-table input");
+  inputs.forEach((input, i) => {
+    if (data.rightTables[i] !== undefined) {
+      input.value = data.rightTables[i];
+    }
+  });
+}
+
+// 페이지 로드시 실행
+document.addEventListener("DOMContentLoaded", function () {
+  loadAllData();
+});
+</script>
+
+
+</body>
+</html>
