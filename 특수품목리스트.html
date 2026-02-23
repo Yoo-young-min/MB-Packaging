@@ -1,0 +1,230 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>MB Packaging</title>
+  <meta charset="utf-8" />
+
+  <style>
+    body { font-family: Arial; }
+    h1 { text-align: center; margin-bottom: 5px; }
+
+    .top-bar {
+      width: 95%;
+      margin: 10px auto;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+
+    .send-btn {
+      padding: 6px 14px;
+      font-size: 12px;
+      cursor: pointer;
+      background-color: #28a745;
+      color: white;
+      border: none;
+      border-radius: 4px;
+    }
+
+    .send-btn:hover { background-color: #218838; }
+
+    #clock { font-size: 15px; color: #0e0d0d; }
+
+    .table-wrapper {
+      width: 95%;
+      height: 750px;
+      overflow-y: auto;
+      margin: auto;
+      border: 1px solid #ccc;
+    }
+
+    
+    table { width: 100%; border-collapse: collapse; }
+    th, td {
+      border: 1px solid #ccc;
+      padding: 6px;
+      text-align: center; 
+      font-size: 12px;       
+      font-weight: 400;
+      color: #070707;
+    }
+    td:focus {
+      outline: 2px solid #4CAF50;
+      background-color: #f0fff4;
+    }
+    td:nth-child(4), td:nth-child(5) { text-align: left; padding-left: 10px; }
+
+    th:nth-child(1) { width: 9%; }
+    th:nth-child(2) { width: 3%; }
+    th:nth-child(3) { width: 3%; }
+    th:nth-child(4) { width: 3%; }
+    th:nth-child(5) { width: 4%; }
+    th:nth-child(6) { width: 4%; }
+    th:nth-child(7) { width: 9%; }
+    th:nth-child(8) { width: 9%; }
+    th:nth-child(9) { width: 4%; }
+    th:nth-child(10) { width: 4%; }
+    th:nth-child(11) { width: 9%; }
+    th:nth-child(12) { width: 4%; }
+    th:nth-child(13) { width: 4%; }
+
+    thead th {
+      position: sticky;
+      top: 0;
+      background-color: powderblue;
+      z-index: 2;
+      font-size: 13px;    
+      font-weight: 400;
+      letter-spacing: 1px;
+      padding: 7px 7px;
+    }
+
+    tr:hover { background-color: #f5f5f5; }
+    tr.selected-row { background-color: #e8f5e9 !important; }
+  </style>
+</head>
+
+<body>
+
+  <h1>특수품목리스트</h1>
+
+  <div class="top-bar">
+    
+  </div>
+
+  <div class="table-wrapper">
+    <table>
+      <thead>
+        <tr>
+          <th>특수품목</th>
+          <th>가로</th>
+          <th>새로</th>
+          <th>높이</th>
+          <th>CBM</th>
+          <th>택배 단가</th>
+          <th>기준수량이하 특수제외</th>
+          <th>특수품목 택배 지정</th>
+          <th>특수품목 지정 택배수</th>
+          <th>특수품목 지정 택배비</th>
+          <th>특수품목 벌크 택배 지정</th>
+          <th>특수품목 벌크 택배수</th>
+          <th>특수품목 벌크 택배비</th>
+        </tr>
+      </thead>
+      <tbody id="orderTable"></tbody>
+    </table>
+  </div>
+
+  <script>
+    function clock() {
+      var time = new Date();
+      var month = time.getMonth() + 1;
+      var date = time.getDate();
+      var day = time.getDay();
+      var week = ["일", "월", "화", "수", "목", "금", "토"];
+      var hours = time.getHours();
+      var minutes = time.getMinutes();
+      var seconds = time.getSeconds();
+      document.getElementById("clock").innerText =
+        month + "월 " + date + "일 " + week[day] + "요일 " +
+        (hours < 10 ? "0" + hours : hours) + ":" +
+        (minutes < 10 ? "0" + minutes : minutes) + ":" +
+        (seconds < 10 ? "0" + seconds : seconds);
+    }
+    clock();
+    setInterval(clock, 1000);
+  </script>
+
+  <script>
+    document.addEventListener("DOMContentLoaded", function () {
+      const tbody = document.getElementById("orderTable");
+      for (let i = 0; i < 1000; i++) {
+        let row = "<tr>";
+        for (let j = 0; j < 13; j++) {  // 열 수 13개로 조정
+          row += "<td contenteditable='true'></td>";
+        }
+        row += "</tr>";
+        tbody.innerHTML += row;
+      }
+    });
+  </script>
+
+  <!-- 엑셀 붙여넣기 -->
+  <script>
+    document.getElementById("orderTable").addEventListener("paste", function(e) {
+      e.preventDefault();
+      const text = (e.clipboardData || window.clipboardData).getData("text");
+      const rows = text.split("\n");
+      const startCell = document.activeElement;
+      const startRow = startCell.parentElement.rowIndex - 1; 
+      const startCol = startCell.cellIndex;
+
+      rows.forEach((rowText, i) => {
+        const cols = rowText.split("\t");
+        cols.forEach((colText, j) => {
+          const row = document.querySelectorAll("#orderTable tr")[startRow + i];
+          if (row) {
+            const cell = row.cells[startCol + j];
+            if (cell) cell.innerText = colText.trim();
+          }
+        });
+      });
+
+      // 붙여넣기 후 '다름' 표시
+      rows.forEach((_, i) => {
+        const row = document.querySelectorAll("#orderTable tr")[startRow + i];
+        if (!row) return;
+        const shopName = row.children[0].innerText.trim();
+        const ecountName = row.children[3].innerText.trim();
+        const compareCell = row.children[2]; 
+        if(shopName !== '' && shopName !== ecountName) {
+          compareCell.style.color = 'red';
+        }
+      });
+    });
+  </script>
+
+  <!-- 키보드 이동 -->
+  <script>
+    document.getElementById("orderTable").addEventListener("keydown", function(e) {
+      const cell = document.activeElement;
+      if (cell.tagName !== "TD") return;
+      const row = cell.parentElement;
+      const colIndex = cell.cellIndex;
+      let target;
+      switch(e.key){
+        case "ArrowRight": target = row.cells[colIndex+1]; break;
+        case "ArrowLeft": target = row.cells[colIndex-1]; break;
+        case "ArrowDown": target = row.nextElementSibling?.cells[colIndex]; break;
+        case "ArrowUp": target = row.previousElementSibling?.cells[colIndex]; break;
+        case "Enter": e.preventDefault(); target = row.nextElementSibling?.cells[colIndex]; break;
+        case "Tab": e.preventDefault(); target = row.cells[colIndex+1] || row.nextElementSibling?.cells[0]; break;
+      }
+      if (target) target.focus();
+    });
+  </script>
+
+  <!-- 1000단위 콤마 적용 -->
+  <script>
+    document.getElementById("orderTable").addEventListener("blur", function(e){
+      const cell = e.target;
+      if(cell.tagName!=="TD") return;
+      const colIndex = cell.cellIndex;
+      if(colIndex === 5 || colIndex === 6){  // 수량, 금액 열만
+        let value = cell.innerText.replace(/,/g,"").trim();
+        if(!isNaN(value) && value!=="") cell.innerText = Number(value).toLocaleString();
+      }
+    }, true);
+  </script>
+
+  <!-- 선택 행 하이라이트 -->
+  <script>
+    document.getElementById("orderTable").addEventListener("focusin", function(e){
+      if(e.target.tagName!=="TD") return;
+      document.querySelectorAll("#orderTable tr").forEach(row => row.classList.remove("selected-row"));
+      e.target.parentElement.classList.add("selected-row");
+    });
+  </script>
+
+</body>
+</html>

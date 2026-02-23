@@ -175,12 +175,12 @@
     setInterval(clock, 1000);
   </script>
 
-  <!-- 행 자동 생성, 500숫자를 변경하면 행 숫자 변경 가능 -->
+  <!-- 행 자동 생성, 1000숫자를 변경하면 행 숫자 변경 가능 -->
   <script>
     document.addEventListener("DOMContentLoaded", function () {
       const tbody = document.getElementById("orderTable");
 
-      for (let i = 0; i < 500; i++) {
+      for (let i = 0; i < 1000; i++) {
         let row = "<tr>";
 
         for (let j = 0; j < 10; j++) {  // 기존 9 → 새 열 추가 10

@@ -72,15 +72,20 @@
       padding-left: 10px;
     }
 
-    th:nth-child(1) { width: 18%; }   /* 쇼핑몰 품목명 */
+    th:nth-child(1) { width: 16%; }   /* 쇼핑몰 품목명 */
     th:nth-child(2) { width: 5%; }  /* 단위 */
-    th:nth-child(3) { width: 18%; }  /* 이카운트 품목명*/
-    th:nth-child(4) { width: 5%; }  /* 코드 */
-    th:nth-child(5) { width: 6%; }  /* 단가 */
-    th:nth-child(6) { width: 5%; }   /* 가로 */
-    th:nth-child(7) { width: 5%; }  /* 세로 */
-    th:nth-child(8) { width: 5%; }  /* 높이 */
-    th:nth-child(9) { width: 7%; }  /* CBM */
+    th:nth-child(3) { width: 3%; }  /* 비교 */
+    th:nth-child(4) { width: 16%; }  /* 이카운트 품목명*/
+    th:nth-child(5) { width: 4%; }  /* 코드 */
+    th:nth-child(6) { width: 6%; }  /* 단가 */
+    th:nth-child(7) { width: 4%; }   /* 가로 */
+    th:nth-child(8) { width: 4%; }  /* 세로 */
+    th:nth-child(9) { width: 4%; }  /* 높이 */
+    th:nth-child(10) { width: 7%; }  /* CBM */
+    th:nth-child(11) { width: 4%; }  /* 세트여부 */
+    th:nth-child(12) { width: 4%; }  /* 구성품 코드 */
+    th:nth-child(13) { width: 4%; }  /* 구성품 수량 */
+    th:nth-child(14) { width: 4%; }  /* 제품 위치 */
     
 
 
@@ -261,6 +266,7 @@
         <tr>
           <th>쇼핑몰 품목명</th>
           <th>단위</th>
+          <th>비교</th>
           <th>이카운트 품목명</th>
           <th>코드</th>
           <th>단가</th>
@@ -268,6 +274,10 @@
           <th>세로</th>
           <th>높이</th>
           <th>CBM</th>
+          <th>세트 여부</th>
+          <th>구성품 코드</th>
+          <th>구성품 수량</th>
+          <th>제품 위치</th>
         </tr>
       </thead>
       <tbody id="orderTable"></tbody><!-- 기존 9열 테이블 -->
@@ -369,22 +379,53 @@
 </div>
 
   
- <!-- 행 자동 생성, 300숫자를 변경하면 행 숫자 변경 가능 -->
+ <!-- 행 자동 생성, 1500숫자를 변경하면 행 숫자 변경 가능 -->
   <script>
     document.addEventListener("DOMContentLoaded", function () {
       const tbody = document.getElementById("orderTable");
 
-      for (let i = 0; i < 300; i++) {
+      for (let i = 0; i < 1500; i++) {
         let row = "<tr>";
 
-        for (let j = 0; j < 9; j++) {  // 9개열
+        for (let j = 0; j < 14; j++) {  // 14개 열
           row += "<td contenteditable='true'></td>";
         }
 
         row += "</tr>";
         tbody.innerHTML += row;
       }
+
+      document.getElementById("orderTable").addEventListener("paste", function(e){
+  e.preventDefault();
+
+  const text = (e.clipboardData || window.clipboardData).getData("text");
+  const rows = text.split(/\r?\n/);
+  
+  const startCell = document.activeElement;
+  const startRow = startCell.parentElement.rowIndex - 1; 
+  const startCol = startCell.cellIndex;
+
+  rows.forEach((rowText, i) => {
+    if(!rowText) return;
+    const cols = rowText.split("\t");
+    const row = document.querySelectorAll("#orderTable tr")[startRow + i];
+    if(!row) return;
+
+    cols.forEach((colText, j) => {
+      const cell = row.cells[startCol + j];
+      if(cell){
+        cell.innerText = colText.trim();
+        
+        // 🔹 붙여넣기 후 바로 이벤트 발생
+        cell.dispatchEvent(new Event('input', { bubbles: true }));
+      }
     });
+  });
+});
+
+    });
+
+    
   </script>
 
 <!-- 엑셀 복붙 기능 -->
@@ -477,7 +518,7 @@ document.getElementById("orderTable").addEventListener("blur", function(e) {
 </script>
 
 
-<!-- 9번째 열(CBM)까지 하이라이트 적용 -->
+<!-- 마지막 열까지 하이라이트 적용 -->
 <script>
 document.getElementById("orderTable").addEventListener("focusin", function(e) {
 
@@ -485,8 +526,8 @@ document.getElementById("orderTable").addEventListener("focusin", function(e) {
 
   const colIndex = e.target.cellIndex;
 
-  // 👉 9번째 열(CBM)까지만 활성화 (0~8)
-  if (colIndex > 8) return;
+  // 👉 마지막 열까지 활성화 (0~13)
+  if (colIndex > 13) return;
 
   // 기존 선택 제거
   document.querySelectorAll("#orderTable tr").forEach(row => {
@@ -503,18 +544,18 @@ document.getElementById("orderTable").addEventListener("focusin", function(e) {
 <script>
 const table = document.getElementById("orderTable");
 
-// 숫자 열 인덱스 (수량=6, 금액=7, 합계=8 → 0부터 시작하므로 5,6,7)
-const numberColumns = [5, 6, 7];
+// 숫자 열 (기존)
+const numberColumns = [5,6,7];
+
+// 1~5열 + 기존 숫자 열
+const editableColumns = [0,1,2,3,4,5,6,7];
 
 table.addEventListener("focusin", function(e) {
-
-  if (e.target.tagName !== "TD") return;
-
+  if(e.target.tagName !== 'TD') return;
   const colIndex = e.target.cellIndex;
 
-  if (numberColumns.includes(colIndex)) {
-
-    // 약간의 딜레이 후 전체 선택
+  if(editableColumns.includes(colIndex)) {
+    // 전체 텍스트 선택
     setTimeout(() => {
       const range = document.createRange();
       range.selectNodeContents(e.target);
@@ -524,6 +565,12 @@ table.addEventListener("focusin", function(e) {
       selection.addRange(range);
     }, 0);
   }
+
+  // 행 하이라이트
+  document.querySelectorAll("#orderTable tr").forEach(row=>{
+    row.classList.remove("selected-row");
+  });
+  e.target.parentElement.classList.add("selected-row");
 });
 </script>
 
@@ -665,64 +712,56 @@ document.querySelectorAll('.number-input').forEach(input => {
 });
 
 
-// 🔥 ② 여기 아래에 방향키 코드 붙이기
+// 🔥 ② 여기 아래에 방향키로 자유 이동
 
 document.querySelectorAll('.side-table').forEach(table => {
-
-  const inputs = table.querySelectorAll('.number-input');
+  const inputs = table.querySelectorAll('input');
 
   inputs.forEach((input) => {
-
     input.addEventListener('keydown', function (e) {
+      const allInputs = Array.from(table.querySelectorAll('input'));
+      const index = allInputs.indexOf(this);
 
-      const row = this.closest('tr');
-      const rows = Array.from(table.querySelectorAll('tr'));
-      const rowIndex = rows.indexOf(row);
-      const cellIndex = Array.from(row.children)
-                             .indexOf(this.parentElement);
+      let nextInput;
+      switch(e.key) {
+        case "ArrowRight":
+          nextInput = allInputs[index + 1];
+          break;
+        case "ArrowLeft":
+          nextInput = allInputs[index - 1];
+          break;
+        case "ArrowDown":
+          {
+            const currentRow = this.closest('tr');
+            const cellIndex = Array.from(currentRow.children).indexOf(this.parentElement);
 
-      if (e.key === "ArrowRight") {
-        e.preventDefault();
-        const next = row.children[cellIndex + 1];
-        if (next && next.querySelector('input')) {
-          next.querySelector('input').focus();
-        }
-      }
-
-      if (e.key === "ArrowLeft") {
-        e.preventDefault();
-        const prev = row.children[cellIndex - 1];
-        if (prev && prev.querySelector('input')) {
-          prev.querySelector('input').focus();
-        }
-      }
-
-      if (e.key === "ArrowDown") {
-        e.preventDefault();
-        const nextRow = rows[rowIndex + 1];
-        if (nextRow) {
-          const nextCell = nextRow.children[cellIndex];
-          if (nextCell && nextCell.querySelector('input')) {
-            nextCell.querySelector('input').focus();
+            let nextRow = currentRow.nextElementSibling;
+            while(nextRow && !nextRow.querySelectorAll('input')[cellIndex]) {
+              nextRow = nextRow.nextElementSibling;
+            }
+            if(nextRow) nextInput = nextRow.querySelectorAll('input')[cellIndex];
           }
-        }
-      }
+          break;
+        case "ArrowUp":
+          {
+            const currentRow = this.closest('tr');
+            const cellIndex = Array.from(currentRow.children).indexOf(this.parentElement);
 
-      if (e.key === "ArrowUp") {
-        e.preventDefault();
-        const prevRow = rows[rowIndex - 1];
-        if (prevRow) {
-          const prevCell = prevRow.children[cellIndex];
-          if (prevCell && prevCell.querySelector('input')) {
-            prevCell.querySelector('input').focus();
+            let prevRow = currentRow.previousElementSibling;
+            while(prevRow && !prevRow.querySelectorAll('input')[cellIndex]) {
+              prevRow = prevRow.previousElementSibling;
+            }
+            if(prevRow) nextInput = prevRow.querySelectorAll('input')[cellIndex];
           }
-        }
+          break;
       }
 
+      if(nextInput) {
+        e.preventDefault();
+        nextInput.focus();
+      }
     });
-
   });
-
 });
 
 </script>
@@ -730,24 +769,134 @@ document.querySelectorAll('.side-table').forEach(table => {
 
 <!-- 좌측 테이블 CBM 자동 계산식  -->
 <script>
-document.getElementById('orderTable').addEventListener('input', function(e) {
-  const row = e.target.closest('tr');
-  if (!row) return;
+const orderTable = document.getElementById('orderTable');
 
-  // 6~8열: 가로, 세로, 높이
-  const width  = parseFloat(row.children[5].innerText.replace(/,/g,'')) || 0;
-  const length = parseFloat(row.children[6].innerText.replace(/,/g,'')) || 0;
-  const height = parseFloat(row.children[7].innerText.replace(/,/g,'')) || 0;
+function calculateCBM(row){
+  if(!row) return;
 
-  const cbmCell = row.children[8]; // CBM 열
-  if (width > 0 && length > 0 && height > 0) {
-    const cbm = (width * length * height) / 1000000;
+  // 6~8열: 가로, 세로, 높이 (0-based)
+  let w = row.children[6].innerText.replace(/,/g,'').trim();
+  let l = row.children[7].innerText.replace(/,/g,'').trim();
+  let h = row.children[8].innerText.replace(/,/g,'').trim();
+
+  w = parseFloat(w) || 0;
+  l = parseFloat(l) || 0;
+  h = parseFloat(h) || 0;
+
+  const cbmCell = row.children[9]; // CBM 표시
+  if(w>0 && l>0 && h>0){
+    const cbm = (w/1000)*(l/1000)*(h/1000); // mm → m
     cbmCell.textContent = cbm.toFixed(6);
   } else {
     cbmCell.textContent = '';
   }
+}
+
+// 붙여넣기 포함 input 이벤트
+orderTable.addEventListener('input', function(e){
+  const row = e.target.closest('tr');
+  setTimeout(()=>calculateCBM(row), 0);
 });
+
+// blur 이벤트도 추가 (혹시 놓친 경우 대비)
+orderTable.addEventListener('blur', function(e){
+  const row = e.target.closest('tr');
+  calculateCBM(row);
+}, true);
+
+// 🔹 페이지 로드 시 기존 값 계산
+document.addEventListener('DOMContentLoaded', function(){
+  const rows = orderTable.querySelectorAll('tr');
+  rows.forEach(row => calculateCBM(row));
+});
+
+
+// 쇼핑몰 vs 이카운트 비교 '다름' 표시
+function updateCompare(row) {
+  if(!row) return;
+
+  const shopName = row.children[0].innerText.trim();
+  const ecountName = row.children[3].innerText.trim();
+  const compareCell = row.children[2]; // 비교 열
+
+  if(shopName === '' && ecountName === '') {
+    compareCell.innerText = '';
+  } else if(shopName === ecountName) {
+    compareCell.innerText = '';
+  } else {
+    compareCell.innerText = '다름';
+    compareCell.style.color = 'red';        // 항상 빨간색
+    compareCell.style.fontWeight = '400';   // 보통 글꼴
+  }
+}
+
+// 입력 시마다 호출
+document.getElementById("orderTable").addEventListener("input", function(e){
+  const row = e.target.closest('tr');
+  updateCompare(row);
+});
+
+// 붙여넣기 후에도 호출
+document.getElementById("orderTable").addEventListener("paste", function(e){
+  setTimeout(() => { // 붙여넣기 처리 후
+    const rows = document.querySelectorAll("#orderTable tr");
+    rows.forEach(row => updateCompare(row));
+  }, 0);
+});
+
+// 페이지 로드 시 기존 데이터에도 적용
+document.addEventListener("DOMContentLoaded", function(){
+  const rows = document.querySelectorAll("#orderTable tr");
+  rows.forEach(row => updateCompare(row));
+});
+
+
+// 기존 비교 열에 '다름' 있는 경우 빨간색 + 보통 글꼴 적용
+function applyCompareHighlight() {
+  const rows = document.querySelectorAll("#orderTable tr");
+  rows.forEach(row => {
+    const compareCell = row.children[2]; // 비교 열
+    if (compareCell && compareCell.innerText.trim().toLowerCase() === '다름') {
+      compareCell.style.color = 'red';
+      compareCell.style.fontWeight = '400'; // 보통 글꼴
+    }
+  });
+}
+
+// 페이지 로드 시 적용
+document.addEventListener("DOMContentLoaded", function() {
+  applyCompareHighlight();
+});
+
+
+
+// 셀 자체 복사, 붙여넣기 기능 //
+let copiedCellContent = '';
+
+document.getElementById('orderTable').addEventListener('keydown', function(e){
+  const cell = document.activeElement;
+  if(cell.tagName !== 'TD') return;
+
+  // 복사
+  if(e.ctrlKey && e.key === 'c') {
+    e.preventDefault();
+    copiedCellContent = cell.innerText;
+  }
+
+  // 붙여넣기
+  if(e.ctrlKey && e.key === 'v') {
+    e.preventDefault();
+    if(copiedCellContent !== '') {
+      cell.innerText = copiedCellContent;
+      cell.dispatchEvent(new Event('input')); // 비교/CBM 등 반영
+    }
+  }
+});
+
+
 </script>
+
+
 
 
 <!-- 테이블에 제품리스트 보이게 -->
@@ -781,6 +930,9 @@ document.addEventListener("DOMContentLoaded", function () {
   loadAllData();
 });
 </script>
+
+
+
 
 
 </body>
